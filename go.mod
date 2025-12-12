@@ -1,6 +1,6 @@
 module firefly-go-proxy
 
-go 1.25.4
+go 1.25.5
 
 require (
 	github.com/elazarl/goproxy v1.7.2

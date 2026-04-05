@@ -27,6 +27,6 @@ jobs:
       - name: Upload release
         env:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: script/release-uploader -token=$REPO_TOKEN -release-url="https://git.kain.io.vn/api/v1/repos/Firefly-Shelter/Firefly_Go_Proxy/releases" -files="firefly-go-proxy.exe"
+        run: script/release-uploader -token=$REPO_TOKEN -release-url="https://git.kain.io.vn/api/v1/repos/Firefly-Shelter/FireflyGo_Proxy/releases" -files="firefly-go-proxy.exe"
 
 

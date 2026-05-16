@@ -5,3 +5,4 @@ firefly-go-proxy-darwin-*
 *.pem
 *.log
 *.crt
+

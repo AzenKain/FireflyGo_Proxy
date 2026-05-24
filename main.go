@@ -37,6 +37,7 @@ func main() {
 	blockedStr := flag.String("b", "", "comma separated list of blocked ports")
 	proxyPort := flag.Int("p", 0, "proxy listen port (default: auto)")
 	exePath := flag.String("e", "", "path to the executable")
+	parentPID := flag.Int("parent-pid", 0, "parent process id to watch")
 	flag.Parse()
 
 	relaunched, err := relaunchWithAdminIfNeeded()
@@ -74,8 +75,10 @@ func main() {
 	proxyAddr := "127.0.0.1"
 	proxyEndpoint := proxyAddr + ":" + port
 	proxyEnabled := false
+	stopProxyRefresh := func() {}
 
 	defer func() {
+		stopProxyRefresh()
 		if r := recover(); r != nil {
 			zlog.Error().
 				Interface("panic", r).
@@ -93,6 +96,7 @@ func main() {
 		return
 	}
 	proxyEnabled = true
+	stopProxyRefresh = startProxyRefreshLoop(proxyAddr, port)
 
 	customCaMitm := &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(cert)}
 	var customAlwaysMitm goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
@@ -124,6 +128,7 @@ func main() {
 		}
 
 		if matchDomain(host, AlwaysIgnoreDomains) {
+			zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
 			return req, nil
 		}
 
@@ -167,6 +172,7 @@ func main() {
 			return req, nil
 		}
 
+		zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
 		return req, nil
 	})
 
@@ -182,6 +188,7 @@ func main() {
 
 	stop := make(chan os.Signal, 1)
 	serverErr := make(chan error, 1)
+	parentDone := parentProcessDone(*parentPID)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	if *exePath != "" && exists(*exePath) {
 		go func() {
@@ -210,6 +217,8 @@ func main() {
 	case <-stop:
 	case err := <-serverErr:
 		zlog.Error().Err(err).Msg("ListenAndServe failed")
+	case <-parentDone:
+		zlog.Info().Int("ParentPID", *parentPID).Msg("Parent process exited")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

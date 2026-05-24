@@ -36,29 +36,11 @@ jobs:
         run: |
           chmod +x ./script/release-uploader
 
-      - name: Upload Windows release
+      - name: Upload release
         env:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
           script/release-uploader \
             -token="$REPO_TOKEN" \
             -release-url="https://git.kain.io.vn/api/v1/repos/Firefly-Shelter/FireflyGo_Proxy/releases" \
-            -files="firefly-go-proxy.exe"
-
-      - name: Upload macOS Intel release
-        env:
-          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: |
-          script/release-uploader \
-            -token="$REPO_TOKEN" \
-            -release-url="https://git.kain.io.vn/api/v1/repos/Firefly-Shelter/FireflyGo_Proxy/releases" \
-            -files="firefly-go-proxy-macos-amd64"
-
-      - name: Upload macOS ARM release
-        env:
-          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: |
-          script/release-uploader \
-            -token="$REPO_TOKEN" \
-            -release-url="https://git.kain.io.vn/api/v1/repos/Firefly-Shelter/FireflyGo_Proxy/releases" \
-            -files="firefly-go-proxy-macos-arm64"
+            -files="firefly-go-proxy.exe,firefly-go-proxy-macos-amd64,firefly-go-proxy-macos-arm64"

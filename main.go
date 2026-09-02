@@ -50,6 +50,7 @@ func main() {
 	exePath := flag.String("e", "", "path to the executable")
 	parentPID := flag.Int("parent-pid", 0, "parent process id to watch")
 	noSys := flag.Bool("no-sys", false, "skip certificate installation and system proxy setup")
+	verbose := flag.Bool("v", false, "log every request (PASS/redirect)")
 	flag.Parse()
 
 	redirectScheme, redirectTarget := parseRedirect(*redirectHost)
@@ -132,7 +133,8 @@ func main() {
 		MaxIdleConnsPerHost: 100,
 		IdleConnTimeout:     90 * time.Second,
 		DisableCompression:  false,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		ForceAttemptHTTP2:   true,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
 	proxy.CertStore = NewCertStorage()
 	proxy.OnRequest().HandleConnect(customAlwaysMitm)
@@ -146,12 +148,16 @@ func main() {
 		}
 
 		if matchDomain(host, AlwaysIgnoreDomains) {
-			zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+			if *verbose {
+				zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+			}
 			return req, nil
 		}
 
 		if matchURL(path, AlwaysIgnoreUrls) {
-			zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+			if *verbose {
+				zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+			}
 			return req, nil
 		}
 
@@ -180,35 +186,45 @@ func main() {
 			full := req.URL.String()
 			if containsURL(full, ForceRedirectOnUrlContains) {
 
-				zlog.Info().
-					Str("from_url", full).
-					Str("raw_query", rawQuery).
-					Msg("Force redirect")
+				if *verbose {
+					zlog.Info().
+						Str("from_url", full).
+						Str("raw_query", rawQuery).
+						Msg("Force redirect")
+				}
 
 				req.URL.Scheme = redirectScheme
 				req.URL.Host = redirectTarget
 				req.Host = redirectTarget
 				req.URL.RawQuery = rawQuery
 				req.RequestURI = ""
-				zlog.Info().Str("to_url", req.URL.String()).Msg("Force redirected")
+				if *verbose {
+					zlog.Info().Str("to_url", req.URL.String()).Msg("Force redirected")
+				}
 				return req, nil
 			}
 
-			zlog.Info().
-				Str("host", host).
-				Str("from_url", full).
-				Str("raw_query", rawQuery).
-				Msg("Redirect domain")
+			if *verbose {
+				zlog.Info().
+					Str("host", host).
+					Str("from_url", full).
+					Str("raw_query", rawQuery).
+					Msg("Redirect domain")
+			}
 			req.URL.Scheme = redirectScheme
 			req.URL.Host = redirectTarget
 			req.Host = redirectTarget
 			req.URL.RawQuery = rawQuery
 			req.RequestURI = ""
-			zlog.Info().Str("to_url", req.URL.String()).Msg("Redirected domain")
+			if *verbose {
+				zlog.Info().Str("to_url", req.URL.String()).Msg("Redirected domain")
+			}
 			return req, nil
 		}
 
-		zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+		if *verbose {
+			zlog.Warn().Str("url", req.URL.String()).Msg("PASS URL")
+		}
 		return req, nil
 	})
 

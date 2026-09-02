@@ -24,7 +24,11 @@ func (cs *CertStorage) Fetch(hostname string, gen func() (*tls.Certificate, erro
 	}
 
 	cs.mtx.Lock()
-	cs.certs[hostname] = cert
+	if existing, ok := cs.certs[hostname]; ok {
+		cert = existing
+	} else {
+		cs.certs[hostname] = cert
+	}
 	cs.mtx.Unlock()
 
 	return cert, nil

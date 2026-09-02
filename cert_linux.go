@@ -58,5 +58,33 @@ func installCA(absPath string) error {
 		return cmd.Run()
 	}
 
+	// Fedora / RHEL / CentOS / Rocky / AlmaLinux
+	if strings.Contains(content, "ID=fedora") ||
+		strings.Contains(content, "ID=rhel") ||
+		strings.Contains(content, "ID=centos") ||
+		strings.Contains(content, "ID=rocky") ||
+		strings.Contains(content, "ID=almalinux") {
+
+		destDir := "/etc/pki/ca-trust/source/anchors"
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return fmt.Errorf("failed to create cert dir: %v", err)
+		}
+
+		destPath := filepath.Join(destDir, filepath.Base(absPath))
+
+		inputData, err := os.ReadFile(absPath)
+		if err != nil {
+			return fmt.Errorf("failed to read source file: %v", err)
+		}
+		if err := os.WriteFile(destPath, inputData, 0644); err != nil {
+			return fmt.Errorf("failed to write cert file to system: %v", err)
+		}
+
+		cmd := exec.Command("update-ca-trust")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
+
 	return fmt.Errorf("unsupported Linux distribution")
 }

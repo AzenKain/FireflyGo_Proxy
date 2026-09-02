@@ -1,4 +1,5 @@
 # Changelog
 
 ### UPDATE
-- Support linux, macos, window
+
+- Optimize proxy

@@ -16,7 +16,7 @@ A lightweight HTTP/HTTPS proxy server with domain redirection and request blocki
 
 ### Prerequisites
 
-- Go 1.22 or higher
+- Go 1.27 or higher
 - Git
 
 ### Building from source
@@ -46,30 +46,35 @@ go build
 ### Examples
 
 1. Start proxy with default settings:
+
    ```bash
    ./firefly-proxy //linux|macos
    ./firefly-proxy.exe //windows
    ```
 
 2. Redirect traffic to a different host:
+
    ```bash
    ./firefly-proxy -r 192.168.1.100:8080 //linux|macos
    ./firefly-proxy.exe -r 192.168.1.100:8080 //windows
    ```
 
 3. Block specific ports:
+
    ```bash
    ./firefly-proxy -b "80,443,8080" //linux|macos
    ./firefly-proxy.exe -b "80,443,8080" //windows
    ```
 
 4. Run an executable with admin privileges:
+
    ```bash
    ./firefly-proxy -e "/path/to/your/executable" //linux|macos
    ./firefly-proxy.exe -e "/path/to/your/executable" //windows
    ```
 
 5. Start proxy on a specific port:
+
    ```bash
    ./firefly-proxy -p 8888 //linux|macos
    ./firefly-proxy.exe -p 8888 //windows
@@ -78,6 +83,7 @@ go build
    On macOS/Linux, if the proxy is not already running as root, it relaunches with an administrator prompt. On Linux, logs from the elevated process are written to `/tmp/firefly-go-proxy.log`; on macOS, elevated process output is discarded.
 
 6. Start only the proxy server without changing system settings:
+
    ```bash
    ./firefly-proxy -no-sys -p 8888 //linux|macos
    ./firefly-proxy.exe -no-sys -p 8888 //windows
@@ -86,6 +92,7 @@ go build
 ## How it works
 
 The proxy intercepts HTTP/HTTPS traffic and can:
+
 - Redirect requests based on domain names
 - Block specific URLs or patterns
 - Handle SSL/TLS connections with custom CA certificates
@@ -94,5 +101,3 @@ The proxy intercepts HTTP/HTTPS traffic and can:
 ## License
 
 MIT License
-
-

@@ -193,10 +193,7 @@ func main() {
 		fmt.Printf("Size: %d bytes, SHA256: %s\n", size, hash)
 
 		// Request presigned URL
-		contentType := "application/octet-stream"
-		if filepath.Ext(fileName) == ".zip" {
-			contentType = "application/zip"
-		}
+		contentType := detectContentType(fileName)
 		fmt.Println("Requesting presigned URL...")
 		presigned, err := getPresignedURL(apiURL, accessToken, fileName, contentType, size)
 		if err != nil {
@@ -206,7 +203,7 @@ func main() {
 
 		// Upload file to S3
 		fmt.Println("Uploading file to storage...")
-		err = uploadFileToS3(filePath, presigned)
+		err = uploadFileToS3(filePath, contentType, presigned)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to upload file to storage: %v\n", err)
 			os.Exit(1)
@@ -271,6 +268,13 @@ func main() {
 	} else {
 		fmt.Printf("\nAll %d components successfully published to API.\n", processedCount)
 	}
+}
+
+func detectContentType(fileName string) string {
+	if strings.HasSuffix(strings.ToLower(fileName), ".zip") {
+		return "application/zip"
+	}
+	return "application/octet-stream"
 }
 
 func detectPlatformFromFilename(name string) string {
@@ -481,7 +485,7 @@ func getPresignedURL(apiURL, accessToken, fileName, contentType string, size int
 	return &presigned, nil
 }
 
-func uploadFileToS3(path string, presigned *PreSignedResponse) error {
+func uploadFileToS3(path, contentType string, presigned *PreSignedResponse) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -504,8 +508,13 @@ func uploadFileToS3(path string, presigned *PreSignedResponse) error {
 	}
 
 	req.ContentLength = stat.Size()
+	// Must match the content type the presigned URL was issued for, otherwise
+	// S3 rejects the request with SignatureDoesNotMatch.
 	if req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", "application/zip")
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		req.Header.Set("Content-Type", contentType)
 	}
 
 	client := &http.Client{Timeout: 10 * time.Minute}
